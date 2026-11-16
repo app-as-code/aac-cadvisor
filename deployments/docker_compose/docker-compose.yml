@@ -1,0 +1,63 @@
+services:
+  # --- Main Application Service ---
+  aac-cadvisor:
+    image: "gcr.io/cadvisor/cadvisor:v0.55.1"
+    container_name: "aac-cadvisor"
+    hostname: "cadvisor"
+    restart: "always"
+
+    command:
+      - "--disable_metrics=percpu,sched,process,tcp,udp,advtcp,hugetlb,referenced_memory,resctrl,cpu_topology"
+      - "--storage_duration=1m"
+      - "--housekeeping_interval=30s"
+      - "--docker_only=true"
+      - "--store_container_labels=false"
+      - "--whitelisted_container_labels=com.docker.compose.service,com.docker.compose.project"
+
+    environment:
+      PUID: "1000"
+      TZ: "Europe/Berlin"
+      PGID: "1000"
+
+    ports:
+      - "8381:8080/tcp"
+
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:ro"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker:/var/lib/docker:ro"
+
+    networks:
+      - exposed
+      - interconnect
+      - stack_internal
+
+    labels:
+      auto-dns.createWildcard.aac-cadvisor: "false"
+      auto-dns.customDNS.aac-cadvisor: "true"
+      auto-dns.customDOMAIN.aac-cadvisor: "example.com"
+      auto-dns.customHost.aac-cadvisor: "cadvisor"
+      homepage.group: "Container - Analytics"
+      homepage.name: "Cadvisor"
+      homepage.href: "#"
+      homepage.icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cadvisor.png"
+      homepage.description: "Analyzes resource usage and performance characteristics of running containers."
+
+
+
+
+networks:
+  secured:
+    name: "services-secured"
+    external: true
+  exposed:
+    name: "services-exposed"
+    external: true
+  interconnect:
+    name: "docker-default"
+    external: true
+  stack_internal:
+    name: "aac-cadvisor_stack_internal"
+    driver: "bridge"
+

@@ -1,0 +1,84 @@
+service:
+  name: aac-cadvisor
+  image_repo: gcr.io/cadvisor/cadvisor
+  image_tag: v0.55.1
+  description: Analyzes resource usage and performance characteristics of running
+    containers.
+  icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cadvisor.png
+  category: Container - Analytics
+  hostname: cadvisor
+  stage: prod
+ports:
+- name: web
+  port: 8080
+  external_port: 8381
+  protocol: TCP
+config:
+  domain_name: example.com
+  generate_hostname: false
+  integrations:
+    homepage:
+      enabled: true
+      href: '#'
+    autodns:
+      enabled: true
+    traefik:
+      enabled: false
+  schema_version: 2
+volumes:
+  rootfs:
+    type: bind
+    source: /
+  var_run:
+    type: bind
+    source: /var/run
+  sys:
+    type: bind
+    source: /sys
+  docker_lib:
+    type: bind
+    source: /var/lib/docker
+deployment_strategy:
+  main:
+    enabled: true
+    target_stage: prod
+  dev:
+    enabled: true
+    target_stage: dev
+  test:
+    enabled: false
+    target_stage: test
+  ansible-dev:
+    enabled: true
+    target_stage: dev
+  iac-dev:
+    enabled: true
+    target_stage: dev
+  template-dev:
+    enabled: true
+    target_stage: dev
+deployments:
+  docker_compose:
+    host_base_path: /export/docker
+    restart_policy: always
+    volumes:
+    - rootfs:/rootfs:ro
+    - var_run:/var/run:ro
+    - sys:/sys:ro
+    - docker_lib:/var/lib/docker:ro
+    command:
+    - --disable_metrics=percpu,sched,process,tcp,udp,advtcp,hugetlb,referenced_memory,resctrl,cpu_topology
+    - --storage_duration=1m
+    - --housekeeping_interval=30s
+    - --docker_only=true
+    - --store_container_labels=false
+    - --whitelisted_container_labels=com.docker.compose.service,com.docker.compose.project
+    environment:
+      PUID: '{{ vars.PUID }}'
+      TZ: '{{ vars.TZ }}'
+      PGID: '{{ vars.PGID }}'
+vars:
+  PUID: '1000'
+  TZ: Europe/Berlin
+  PGID: '1000'
+secrets: {}
